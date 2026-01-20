@@ -116,10 +116,13 @@ async function getAgentChatThreads(agentId, accessToken) {
  */
 async function chatApiNonStream(userEmail, agentId, query, threadId, accessToken) {
   try {
+    // Append instruction to limit response length for Slack's message limits
+    const limitedQuery = `${query}\n\n[IMPORTANT: Keep your response concise and under 3000 characters to fit Slack's message limits.]`;
+    
     const requestBody = {
       created_by: userEmail,
       chat_thread_id: threadId || null,
-      user_query: query,
+      user_query: limitedQuery,
       query_source: 'teams-ejento',
       overrides: {
         suggest_followup_questions: true,
