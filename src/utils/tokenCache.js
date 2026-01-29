@@ -27,14 +27,26 @@ async function getUserAccessToken(userId, createTokenFn, userInfo) {
   console.log(`[TokenCache] Creating new token for user ${userId}`);
   const tokenResponse = await createTokenFn(userInfo.email, userInfo.fullName);
   const token = tokenResponse.access_token;
+  const ejentoUserId = tokenResponse.user_id;
 
-  // Cache the token
+  // Cache the token and user_id
   tokenCache.set(userId, {
     token,
+    ejentoUserId,
     expiresAt: Date.now() + TOKEN_EXPIRY_MS,
   });
 
   return token;
+}
+
+/**
+ * Get the Ejento user ID for a Slack user
+ * @param {string} userId - Slack user ID
+ * @returns {number|undefined} Ejento user ID
+ */
+function getUserEjentoId(userId) {
+  const cached = tokenCache.get(userId);
+  return cached?.ejentoUserId;
 }
 
 /**
@@ -54,6 +66,7 @@ function clearAllTokens() {
 
 export {
   getUserAccessToken,
+  getUserEjentoId,
   clearUserToken,
   clearAllTokens,
 };

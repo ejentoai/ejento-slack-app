@@ -28,6 +28,10 @@ const config = {
     responseKey: process.env.RESPONSE_SERVICE_KEY,
     applicationSecret: process.env.EJENTO_APPLICATION_SECRET,
     authToken: process.env.AUTH_TOKEN,
+    // Indexing service configuration
+    indexingBaseUrl: process.env.FAST_API_INDEXING_BASE_URL,
+    indexingHeader: process.env.FAST_API_INDEXING_HEADER,
+    indexingKey: process.env.FAST_API_INDEXING_KEY,
   },
 
   // Default Agent Configuration

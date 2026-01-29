@@ -4,6 +4,20 @@
 
 import { handleMessage, handleAppMention } from './messageHandler.js';
 import { handleHelpCommand } from './commandHandler.js';
+import { 
+  handleFileAttachment, 
+  hasFileAttachments, 
+  getSupportedFiles,
+  isSupportedFileType,
+} from './attachmentHandler.js';
 
-export { handleMessage, handleAppMention, handleHelpCommand };
+export { 
+  handleMessage, 
+  handleAppMention, 
+  handleHelpCommand,
+  handleFileAttachment,
+  hasFileAttachments,
+  getSupportedFiles,
+  isSupportedFileType,
+};
 

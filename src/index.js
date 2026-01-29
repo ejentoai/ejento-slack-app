@@ -39,8 +39,13 @@ const app = new App(appConfig);
 app.message(async (args) => {
   const { message, context } = args;
   
-  // Ignore bot messages, message edits, and thread replies (optional)
-  if (message.bot_id || message.subtype) {
+  // Ignore bot messages and certain subtypes (but allow file_share)
+  if (message.bot_id) {
+    return;
+  }
+  
+  // Allow file_share subtype, ignore others like message_changed, message_deleted
+  if (message.subtype && message.subtype !== 'file_share') {
     return;
   }
 
