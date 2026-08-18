@@ -107,7 +107,7 @@ async function handleMessage({ message, say, client }) {
         fullName: userInfo.fullName,
       });
 
-      console.log('accessToken', accessToken);
+      console.log('[MessageHandler] Access token acquired');
 
       // Get or create chat thread for the agent
       const agentId = defaultAgentId;
@@ -225,7 +225,7 @@ async function handleMessage({ message, say, client }) {
         });
       }
     } catch (apiError) {
-      console.error('[MessageHandler] API Error:', apiError.message);
+      console.error('[MessageHandler] API Error:', apiError.detail || apiError.message);
 
       // Update thinking message with error
       await client.chat.update({
@@ -379,7 +379,7 @@ async function handleStreamingResponse({
       followup_questions: finalResponse?.followup_questions || [],
     };
   } catch (error) {
-    console.error('[MessageHandler] Streaming error:', error.message);
+    console.error('[MessageHandler] Streaming error:', error.detail || error.message);
     
     // Try to update the message with error
     try {

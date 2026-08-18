@@ -1,0 +1,21 @@
+# Secrets - passed in at runtime, never baked into the image
+.env
+.env.*
+
+# Installed inside the image instead
+node_modules
+npm-debug.log*
+
+# Other bots living in this repo
+msteamsbot
+discord-bot
+
+# Not needed at runtime
+.git
+.gitignore
+.vscode
+.idea
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.md

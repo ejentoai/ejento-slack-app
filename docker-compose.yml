@@ -1,0 +1,12 @@
+services:
+  slack-bot:
+    build: .
+    image: ejento-slack-bot:latest
+    container_name: ejento-slack-bot
+    env_file: .env
+    restart: unless-stopped
+
+    # Socket Mode (SLACK_APP_TOKEN set) needs no inbound port.
+    # Uncomment for HTTP mode, which requires SLACK_SIGNING_SECRET instead.
+    # ports:
+    #   - "3000:3000"

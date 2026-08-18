@@ -15,6 +15,33 @@ const {
 } = config.ejento;
 
 /**
+ * Build a readable description of an axios error, including the response body.
+ * Handles responseType:'stream' requests, where the error body arrives as a
+ * Readable stream and must be drained before it can be logged.
+ * @param {Error} error - Axios error
+ * @returns {Promise<string>} Human-readable error detail
+ */
+async function describeApiError(error) {
+  const status = error.response?.status;
+  let body = error.response?.data;
+
+  // Stream responses deliver the error body as a stream, not a parsed object
+  if (body && typeof body.on === 'function') {
+    body = await new Promise((resolve) => {
+      let raw = '';
+      body.on('data', (chunk) => (raw += chunk.toString()));
+      body.on('end', () => resolve(raw.trim()));
+      body.on('error', () => resolve('<could not read error body>'));
+    });
+  } else if (body && typeof body === 'object') {
+    body = JSON.stringify(body);
+  }
+
+  if (!status) return error.message;
+  return `HTTP ${status}${body ? ` - ${body}` : ''}`;
+}
+
+/**
  * Create an access token for a user
  * @param {string} email - User email
  * @param {string} fullName - User full name
@@ -27,8 +54,7 @@ async function createAccessToken(email, fullName) {
       full_name: fullName,
     };
 
-    console.log('applicationSecret', applicationSecret, 'serverBase', serverBase);
-    console.log('requestBody', requestBody);
+    console.log(`[API] createAccessToken for ${email} via ${serverBase}`);
 
     const response = await axios.post(`${serverBase}/user-token`, requestBody, {
       headers: {
@@ -37,7 +63,9 @@ async function createAccessToken(email, fullName) {
       },
     });
 
-    console.log('response', response.data);
+    console.log(
+      `[API] createAccessToken ok: user_id=${response.data.user_id}, role=${response.data.role}, expires_on=${response.data.expires_on}`
+    );
 
     if (response.status !== 201) {
       throw new Error('Failed to create access token for the given user.');
@@ -438,17 +466,27 @@ async function chatApiStream(userEmail, agentId, query, threadId, accessToken, o
 
   console.log('[API] chatApiStream request:', { agentId, userEmail, query: query.substring(0, 50) });
 
-  const response = await axios.post(
-    `${responseServiceBase}/api/v2/agents/${agentId}/responses/stream`,
-    requestBody,
-    {
-      headers: {
-        [responseHeader]: responseKey,
-        Authorization: `Bearer ${accessToken}`,
-      },
-      responseType: 'stream',
-    }
-  );
+  let response;
+  try {
+    response = await axios.post(
+      `${responseServiceBase}/api/v2/agents/${agentId}/responses/stream`,
+      requestBody,
+      {
+        headers: {
+          [responseHeader]: responseKey,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        responseType: 'stream',
+      }
+    );
+  } catch (error) {
+    const detail = await describeApiError(error);
+    console.error('[API] chatApiStream request failed:', detail);
+    console.error('[API] chatApiStream URL:', `${responseServiceBase}/api/v2/agents/${agentId}/responses/stream`);
+    // Attach the detail so callers can log something better than "status code 401"
+    error.detail = detail;
+    throw error;
+  }
 
   return new Promise((resolve, reject) => {
     let buffer = '';
