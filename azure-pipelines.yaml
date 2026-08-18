@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - feat/WB-slack-bot
+      - master
 
 variables:
 - group: 'variables_ejento_common'
@@ -25,7 +25,7 @@ stages:
     - group: 'variables_ejento_prod'
   displayName: Main Build and Deploy
   dependsOn: []
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/feat/WB-slack-bot'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
   - job: Main_Build_Deploy_Job
     displayName: Main Build and Deploy
