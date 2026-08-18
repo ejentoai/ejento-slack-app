@@ -1,0 +1,49 @@
+trigger:
+  branches:
+    include:
+      - feat/WB-slack-bot
+
+variables:
+- group: 'variables_ejento_common'
+- group: 'SCA-variables'
+
+- name: imageRepository
+  value: 'ejento_slack_bot'
+
+- name:  dockerfilePath
+  value: './Dockerfile'
+
+- name: tag
+  value: '$(Build.BuildId)'
+
+pool:
+  name: $(devops_pool)
+
+stages:
+- stage: Main_Build_Deploy
+  variables:
+    - group: 'variables_ejento_prod'
+  displayName: Main Build and Deploy
+  dependsOn: []
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/feat/WB-slack-bot'))
+  jobs:
+  - job: Main_Build_Deploy_Job
+    displayName: Main Build and Deploy
+    steps:
+    - task: Docker@2
+      displayName: Build and push image
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        buildContext: .
+        containerRegistry: $(sc_container_registry_2)
+        tags: |
+          $(tag)
+
+    - task: AzureWebAppContainer@1
+      displayName: Deploy image to Azure App Service
+      inputs:
+        azureSubscription: $(sc_ejento_prod)
+        appName: $(webapp_ejento_slack_bot_prod)
+        imageName: $(container_registry_2)/$(imageRepository):$(tag)
