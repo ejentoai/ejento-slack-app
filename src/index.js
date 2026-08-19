@@ -1,6 +1,7 @@
 import { App } from '@slack/bolt';
 import { config, validateConfig } from './config/index.js';
 import { handleMessage, handleAppMention, handleHelpCommand } from './handlers/index.js';
+import { isDuplicateEvent } from './utils/eventDedup.js';
 
 // Validate configuration before starting
 validateConfig();
@@ -37,8 +38,14 @@ const app = new App(appConfig);
 
 // Handle all messages (DMs, channels, groups)
 app.message(async (args) => {
-  const { message, context } = args;
-  
+  const { message, context, body } = args;
+
+  // Drop Slack retries so a redelivered event isn't handled twice
+  if (isDuplicateEvent(body?.event_id)) {
+    console.log(`[App] Ignoring duplicate event ${body.event_id}`);
+    return;
+  }
+
   // Ignore bot messages and certain subtypes (but allow file_share)
   if (message.bot_id) {
     return;
@@ -73,7 +80,15 @@ app.message(async (args) => {
 });
 
 // Handle @mentions of the bot in channels/groups
-app.event('app_mention', handleAppMention);
+app.event('app_mention', async (args) => {
+  // Same retry guard as above - mentions are redelivered too
+  if (isDuplicateEvent(args.body?.event_id)) {
+    console.log(`[App] Ignoring duplicate app_mention ${args.body.event_id}`);
+    return;
+  }
+
+  await handleAppMention(args);
+});
 
 // ============================================
 // Slash Commands
